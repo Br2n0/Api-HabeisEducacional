@@ -238,12 +238,12 @@ namespace Api_HabeisEducacional.Controllers
             // VERSÃO NOVA: Usando o serviço
             try
             {
-                var aluno = await _alunoService.LoginAsync(loginDto);
+                var aluno = await _alunoService.AuthenticateAsync(loginDto);
+                if (aluno == null)
+                {
+                    return NotFound("Email ou senha incorretos.");
+                }
                 return Ok(aluno);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound("Email ou senha incorretos.");
             }
             catch (Exception ex)
             {

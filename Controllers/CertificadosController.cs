@@ -5,6 +5,7 @@ using Api_HabeisEducacional.DTOs;
 using Api_HabeisEducacional.Models;
 using System.Security.Cryptography;
 using System.Text;
+using Api_HabeisEducacional.Services;
 
 namespace Api_HabeisEducacional.Controllers
 {
@@ -15,15 +16,18 @@ namespace Api_HabeisEducacional.Controllers
     [ApiController]
     public class CertificadosController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        // Comentado: Acesso direto ao contexto do banco de dados
+        // private readonly AppDbContext _context;
+        
+        // Novo: Serviço de certificados que encapsula a lógica de negócios
+        private readonly ICertificadoService _certificadoService;
 
         /// <summary>
-        /// Construtor que recebe o contexto do banco de dados via injeção de dependência
+        /// Construtor que recebe o serviço de certificados via injeção de dependência
         /// </summary>
-        /// <param name="context">Contexto do banco de dados</param>
-        public CertificadosController(AppDbContext context)
+        public CertificadosController(ICertificadoService certificadoService)
         {
-            _context = context;
+            _certificadoService = certificadoService;
         }
 
         /// <summary>
@@ -34,6 +38,8 @@ namespace Api_HabeisEducacional.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CertificadoDTO>>> GetCertificados()
         {
+            // Comentado: Acesso direto ao banco de dados
+            /*
             // Consulta os certificados incluindo os relacionamentos de Curso e Aluno
             // para obter informações adicionais como título do curso e nome do aluno
             return await _context.Certificados
@@ -50,6 +56,10 @@ namespace Api_HabeisEducacional.Controllers
                     AlunoNome = c.Aluno != null ? c.Aluno.Nome : string.Empty
                 })
                 .ToListAsync();
+            */
+            
+            // Novo: Usa o serviço para obter todos os certificados
+            return Ok(await _certificadoService.GetAllAsync());
         }
 
         /// <summary>
@@ -61,6 +71,8 @@ namespace Api_HabeisEducacional.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<CertificadoDTO>> GetCertificado(int id)
         {
+            // Comentado: Acesso direto ao banco de dados
+            /*
             // Busca o certificado incluindo os relacionamentos
             var certificado = await _context.Certificados
                 .Include(c => c.Curso)
@@ -84,6 +96,16 @@ namespace Api_HabeisEducacional.Controllers
                 CursoTitulo = certificado.Curso?.Titulo ?? string.Empty,
                 AlunoNome = certificado.Aluno?.Nome ?? string.Empty
             };
+            */
+            
+            // Novo: Usa o serviço para obter um certificado específico
+            var certificado = await _certificadoService.GetByIdAsync(id);
+            if (certificado == null)
+            {
+                return NotFound();
+            }
+            
+            return certificado;
         }
 
         /// <summary>
@@ -95,6 +117,8 @@ namespace Api_HabeisEducacional.Controllers
         [HttpGet("aluno/{alunoId}")]
         public async Task<ActionResult<IEnumerable<CertificadoDTO>>> GetCertificadosPorAluno(int alunoId)
         {
+            // Comentado: Acesso direto ao banco de dados
+            /*
             // Verifica se o aluno existe
             var aluno = await _context.Alunos.FindAsync(alunoId);
             if (aluno == null)
@@ -118,6 +142,17 @@ namespace Api_HabeisEducacional.Controllers
                     AlunoNome = c.Aluno != null ? c.Aluno.Nome : string.Empty
                 })
                 .ToListAsync();
+            */
+            
+            // Novo: Usa o serviço para obter certificados de um aluno
+            try
+            {
+                return Ok(await _certificadoService.GetByAlunoIdAsync(alunoId));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -129,6 +164,8 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPost]
         public async Task<ActionResult<CertificadoDTO>> PostCertificado(CertificadoCreateDTO certificadoDTO)
         {
+            // Comentado: Acesso direto ao banco de dados
+            /*
             // Verifica se o aluno existe
             var aluno = await _context.Alunos.FindAsync(certificadoDTO.Aluno_ID);
             if (aluno == null)
@@ -187,6 +224,22 @@ namespace Api_HabeisEducacional.Controllers
 
             // Retorna o certificado criado com todas as informações
             return await GetCertificado(certificado.ID);
+            */
+            
+            // Novo: Usa o serviço para emitir um novo certificado
+            try
+            {
+                var novoCertificado = await _certificadoService.EmitirAsync(certificadoDTO);
+                return CreatedAtAction(nameof(GetCertificado), new { id = novoCertificado.ID }, novoCertificado);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -198,6 +251,8 @@ namespace Api_HabeisEducacional.Controllers
         [HttpGet("validar/{codigo}")]
         public async Task<ActionResult<CertificadoDTO>> ValidarCertificado(string codigo)
         {
+            // Comentado: Acesso direto ao banco de dados
+            /*
             // Busca o certificado pelo código de validação
             var certificado = await _context.Certificados
                 .Include(c => c.Curso)
@@ -221,8 +276,27 @@ namespace Api_HabeisEducacional.Controllers
                 CursoTitulo = certificado.Curso?.Titulo ?? string.Empty,
                 AlunoNome = certificado.Aluno?.Nome ?? string.Empty
             };
+            */
+            
+            // Novo: Usa o serviço para validar o certificado
+            try
+            {
+                var certificadoValido = await _certificadoService.GetByCodigoValidacaoAsync(codigo);
+                if (certificadoValido == null)
+                {
+                    return NotFound("Certificado não encontrado. O código de validação é inválido.");
+                }
+                
+                return certificadoValido;
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
+        // Comentado: Método de geração de código de validação movido para o serviço
+        /*
         /// <summary>
         /// Método utilitário para gerar um código de validação único usando SHA256
         /// </summary>
@@ -251,5 +325,6 @@ namespace Api_HabeisEducacional.Controllers
                 return builder.ToString().Substring(0, 16).ToUpper();
             }
         }
+        */
     }
 }

@@ -13,6 +13,8 @@ API para gerenciamento e emissão de certificados de cursos preparatórios, dese
 - [x] Configuração do Entity Framework Core com MySQL
 - [x] Criação da migração inicial
 - [x] Aplicação da migração e criação das tabelas no banco de dados
+- [x] Implementação da camada de serviços (Services) para separação de responsabilidades
+- [x] Refatoração dos controladores para utilizar a camada de serviços
 - [ ] Teste dos endpoints da API (em andamento)
 - [ ] Validação e refinamento das funcionalidades
 - [ ] Implementação da autenticação e autorização
@@ -25,12 +27,15 @@ API para gerenciamento e emissão de certificados de cursos preparatórios, dese
 - Implementar testes completos para todos os endpoints
 - Refinar as validações e tratamento de erros
 - Implementar autenticação JWT
+- Adicionar cache para otimização de desempenho
+- Implementar logging para monitoramento da aplicação
 
 ## Funcionalidades
 
 - Gerenciamento de Cursos (CRUD)
 - Gerenciamento de Alunos (CRUD)
 - Matrículas de Alunos em Cursos (CRUD)
+- Conclusão e cancelamento de matrículas
 - Emissão e Validação de Certificados
 
 ## Requisitos
@@ -70,6 +75,18 @@ dotnet run
 - `Models/`: Entidades do domínio
 - `DTOs/`: Objetos de transferência de dados
 - `Data/`: Contexto do banco de dados
+- `Services/`: Camada de serviços com lógica de negócios
+
+## Padrão de Arquitetura
+
+O projeto segue uma arquitetura em camadas:
+
+1. **Camada de Apresentação (Controllers)**: Responsável por receber as requisições HTTP e retornar respostas.
+2. **Camada de Serviços (Services)**: Contém a lógica de negócios e regras da aplicação.
+3. **Camada de Acesso a Dados (Data)**: Gerencia a persistência e recuperação de dados.
+4. **Camada de Domínio (Models)**: Define as entidades do domínio da aplicação.
+
+A implementação dos serviços (`AlunoService`, `CursoService`, `MatriculaService`, `CertificadoService`) permite a separação clara de responsabilidades e facilita a manutenção e testabilidade do código.
 
 ## Endpoints Principais
 
@@ -92,9 +109,10 @@ dotnet run
 - `GET /api/Matriculas`: Lista todas as matrículas
 - `GET /api/Matriculas/{id}`: Obtém uma matrícula específica
 - `POST /api/Matriculas`: Cria uma nova matrícula
-- `PUT /api/Matriculas/{id}`: Atualiza uma matrícula existente
-- `DELETE /api/Matriculas/{id}`: Remove uma matrícula
+- `PUT /api/Matriculas/{id}/status`: Atualiza o status de uma matrícula
+- `DELETE /api/Matriculas/{id}`: Cancela uma matrícula
 - `GET /api/Matriculas/aluno/{alunoId}`: Lista matrículas de um aluno
+- `POST /api/Matriculas/{id}/concluir`: Conclui uma matrícula
 
 ### Certificados
 - `GET /api/Certificados`: Lista todos os certificados

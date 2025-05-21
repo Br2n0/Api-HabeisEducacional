@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Api_HabeisEducacional.Data;
 
+using Api_HabeisEducacional.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuração do contexto do banco de dados usando MySQL
@@ -11,6 +13,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         new MySqlServerVersion(new Version(8, 0, 33)) // Especifica a versão do MySQL
     )
 );
+
+// Registro dos serviços da aplicação
+builder.Services.AddScoped<IAlunoService, AlunoService>();
+builder.Services.AddScoped<ICursoService, CursoService>();
+builder.Services.AddScoped<IMatriculaService, MatriculaService>();
+builder.Services.AddScoped<ICertificadoService, CertificadoService>();
 
 // Configuração do CORS para permitir requisições de origens diferentes
 // Isso é essencial para aplicações frontend que acessam esta API de outros domínios
