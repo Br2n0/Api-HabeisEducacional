@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-<<<<<<< HEAD
 // VERSÃO ANTIGA - Imports necessários para a versão anterior
 /*
 using Microsoft.EntityFrameworkCore;
@@ -16,22 +15,10 @@ namespace Api_HabeisEducacional.Controllers
     /// <summary>
     /// Controlador responsável por gerenciar operações relacionadas a alunos
     /// </summary>
-=======
-using Microsoft.EntityFrameworkCore;
-using Api_HabeisEducacional.Data;
-using Api_HabeisEducacional.DTOs;
-using Api_HabeisEducacional.Models;
-using System.Security.Cryptography;
-using System.Text;
-
-namespace Api_HabeisEducacional.Controllers
-{
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
     [Route("api/[controller]")]
     [ApiController]
     public class AlunosController : ControllerBase
     {
-<<<<<<< HEAD
         /*
         // VERSÃO ANTERIOR: Acesso direto ao banco de dados
         private readonly AppDbContext _context;
@@ -45,27 +32,17 @@ namespace Api_HabeisEducacional.Controllers
         {
             // _context = context; // Removido na versão nova
             _alunoService = alunoService;
-=======
-        private readonly AppDbContext _context;
-
-        public AlunosController(AppDbContext context)
-        {
-            _context = context;
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // GET: api/Alunos
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AlunoDTO>>> GetAlunos()
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             var alunos = await _alunoService.GetAllAsync();
             return Ok(alunos);
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             return await _context.Alunos
                 .Select(a => new AlunoDTO
                 {
@@ -75,17 +52,13 @@ namespace Api_HabeisEducacional.Controllers
                     Data_Cadastro = a.Data_Cadastro
                 })
                 .ToListAsync();
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // GET: api/Alunos/5
         [HttpGet("{id}")]
         public async Task<ActionResult<AlunoDTO>> GetAluno(int id)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             var aluno = await _alunoService.GetByIdAsync(id);
             
@@ -95,8 +68,6 @@ namespace Api_HabeisEducacional.Controllers
             return aluno;
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             var aluno = await _context.Alunos.FindAsync(id);
 
             if (aluno == null)
@@ -111,17 +82,13 @@ namespace Api_HabeisEducacional.Controllers
                 Email = aluno.Email,
                 Data_Cadastro = aluno.Data_Cadastro
             };
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // POST: api/Alunos
         [HttpPost]
         public async Task<ActionResult<AlunoDTO>> PostAluno(AlunoCreateDTO alunoDto)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             try
             {
@@ -134,8 +101,6 @@ namespace Api_HabeisEducacional.Controllers
             }
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             // Verificar se o email já está em uso
             if (await _context.Alunos.AnyAsync(a => a.Email == alunoDto.Email))
             {
@@ -160,17 +125,13 @@ namespace Api_HabeisEducacional.Controllers
                 Email = aluno.Email,
                 Data_Cadastro = aluno.Data_Cadastro
             });
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // PUT: api/Alunos/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAluno(int id, AlunoCreateDTO alunoDto)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             try
             {
@@ -187,8 +148,6 @@ namespace Api_HabeisEducacional.Controllers
             }
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             var aluno = await _context.Alunos.FindAsync(id);
             if (aluno == null)
             {
@@ -229,17 +188,13 @@ namespace Api_HabeisEducacional.Controllers
             }
 
             return NoContent();
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // DELETE: api/Alunos/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAluno(int id)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             try
             {
@@ -256,8 +211,6 @@ namespace Api_HabeisEducacional.Controllers
             }
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             var aluno = await _context.Alunos.FindAsync(id);
             if (aluno == null)
             {
@@ -275,28 +228,29 @@ namespace Api_HabeisEducacional.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // POST: api/Alunos/login
         [HttpPost("login")]
         public async Task<ActionResult<AlunoDTO>> Login(AlunoLoginDTO loginDto)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
-            var aluno = await _alunoService.AuthenticateAsync(loginDto);
-            
-            if (aluno == null)
-                return Unauthorized("Email ou senha inválidos");
-                
-            return aluno;
+            try
+            {
+                var aluno = await _alunoService.LoginAsync(loginDto);
+                return Ok(aluno);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Email ou senha incorretos.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             var aluno = await _context.Alunos
                 .FirstOrDefaultAsync(a => a.Email == loginDto.Email);
 
@@ -312,15 +266,10 @@ namespace Api_HabeisEducacional.Controllers
                 Email = aluno.Email,
                 Data_Cadastro = aluno.Data_Cadastro
             };
-<<<<<<< HEAD
             */
         }
 
-        /* Métodos auxiliares da versão anterior - comentados para evitar conflitos
-=======
-        }
-
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
+        /* Métodos auxiliares da versão anterior
         private bool AlunoExists(int id)
         {
             return _context.Alunos.Any(e => e.ID == id);
@@ -340,9 +289,6 @@ namespace Api_HabeisEducacional.Controllers
                 return builder.ToString();
             }
         }
-<<<<<<< HEAD
         */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
     }
 }

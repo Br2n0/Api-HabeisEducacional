@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Api_HabeisEducacional.Data;
 using Api_HabeisEducacional.DTOs;
 using Api_HabeisEducacional.Models;
-<<<<<<< HEAD
 using Api_HabeisEducacional.Services;
 
 namespace Api_HabeisEducacional.Controllers
@@ -11,16 +10,10 @@ namespace Api_HabeisEducacional.Controllers
     /// <summary>
     /// Controlador responsável por gerenciar operações relacionadas a cursos
     /// </summary>
-=======
-
-namespace Api_HabeisEducacional.Controllers
-{
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
     [Route("api/[controller]")]
     [ApiController]
     public class CursosController : ControllerBase
     {
-<<<<<<< HEAD
         // VERSÃO ANTERIOR: Acesso direto ao banco de dados
         private readonly AppDbContext _context;
         
@@ -32,27 +25,17 @@ namespace Api_HabeisEducacional.Controllers
         {
             _context = context;
             _cursoService = cursoService;
-=======
-        private readonly AppDbContext _context;
-
-        public CursosController(AppDbContext context)
-        {
-            _context = context;
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // GET: api/Cursos
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CursoDTO>>> GetCursos()
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             var cursos = await _cursoService.GetAllAsync();
             return Ok(cursos);
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             return await _context.Cursos
                 .Select(c => new CursoDTO
                 {
@@ -64,17 +47,13 @@ namespace Api_HabeisEducacional.Controllers
                     Duracao = c.Duracao
                 })
                 .ToListAsync();
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // GET: api/Cursos/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CursoDTO>> GetCurso(int id)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             var curso = await _cursoService.GetByIdAsync(id);
             
@@ -84,8 +63,6 @@ namespace Api_HabeisEducacional.Controllers
             return curso;
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             var curso = await _context.Cursos.FindAsync(id);
 
             if (curso == null)
@@ -102,17 +79,13 @@ namespace Api_HabeisEducacional.Controllers
                 Preco = curso.Preco,
                 Duracao = curso.Duracao
             };
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // POST: api/Cursos
         [HttpPost]
         public async Task<ActionResult<CursoDTO>> PostCurso(CursoCreateDTO cursoDto)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             try 
             {
@@ -125,8 +98,6 @@ namespace Api_HabeisEducacional.Controllers
             }
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             var curso = new Curso
             {
                 Titulo = cursoDto.Titulo,
@@ -148,17 +119,13 @@ namespace Api_HabeisEducacional.Controllers
                 Preco = curso.Preco,
                 Duracao = curso.Duracao
             });
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // PUT: api/Cursos/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCurso(int id, CursoCreateDTO cursoDto)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             try
             {
@@ -175,8 +142,6 @@ namespace Api_HabeisEducacional.Controllers
             }
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             var curso = await _context.Cursos.FindAsync(id);
             if (curso == null)
             {
@@ -206,17 +171,13 @@ namespace Api_HabeisEducacional.Controllers
             }
 
             return NoContent();
-<<<<<<< HEAD
             */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
         }
 
         // DELETE: api/Cursos/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCurso(int id)
         {
-<<<<<<< HEAD
             // VERSÃO NOVA: Usando o serviço
             try
             {
@@ -233,8 +194,6 @@ namespace Api_HabeisEducacional.Controllers
             }
             
             /* VERSÃO ANTERIOR: Acesso direto ao banco de dados
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
             var curso = await _context.Cursos.FindAsync(id);
             if (curso == null)
             {
@@ -252,22 +211,15 @@ namespace Api_HabeisEducacional.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-<<<<<<< HEAD
             */
         }
 
-        /* Método auxiliar da versão anterior - comentado para evitar conflitos
-=======
-        }
-
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
+        // Método auxiliar para versão anterior
+        /*
         private bool CursoExists(int id)
         {
             return _context.Cursos.Any(e => e.ID == id);
         }
-<<<<<<< HEAD
         */
-=======
->>>>>>> fc260eac049c8e985783caa4ca0e8af4e7b74150
     }
 }
