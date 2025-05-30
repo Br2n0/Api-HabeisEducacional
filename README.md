@@ -15,6 +15,8 @@ API para gerenciamento e emissão de certificados de cursos preparatórios, dese
 - [x] Aplicação da migração e criação das tabelas no banco de dados
 - [x] Implementação da camada de serviços (Services) para separação de responsabilidades
 - [x] Refatoração dos controladores para utilizar a camada de serviços
+- [x] Implementação de validações de dados em múltiplas camadas
+- [x] Implementação de relacionamentos muitos-para-um
 - [ ] Teste dos endpoints da API (em andamento)
 - [ ] Validação e refinamento das funcionalidades
 - [ ] Implementação da autenticação e autorização
@@ -23,7 +25,6 @@ API para gerenciamento e emissão de certificados de cursos preparatórios, dese
 
 ## Próximos Passos
 
-- Resolver o erro de conexão "TypeError: NetworkError when attempting to fetch resource" no Swagger
 - Implementar testes completos para todos os endpoints
 - Refinar as validações e tratamento de erros
 - Implementar autenticação JWT
@@ -37,6 +38,8 @@ API para gerenciamento e emissão de certificados de cursos preparatórios, dese
 - Matrículas de Alunos em Cursos (CRUD)
 - Conclusão e cancelamento de matrículas
 - Emissão e Validação de Certificados
+- Validações completas para evitar dados inválidos ou vazios
+- Relacionamentos muitos-para-um implementados corretamente
 
 ## Requisitos
 
@@ -73,20 +76,26 @@ dotnet run
 
 - `Controllers/`: Controladores da API
 - `Models/`: Entidades do domínio
-- `DTOs/`: Objetos de transferência de dados
-- `Data/`: Contexto do banco de dados
-- `Services/`: Camada de serviços com lógica de negócios
+- `DTOs/`: Objetos de transferência de dados com validações
+- `Data/`: Contexto do banco de dados e configurações de relacionamentos
+- `Services/`: Camada de serviços com lógica de negócios e validações
 
 ## Padrão de Arquitetura
 
 O projeto segue uma arquitetura em camadas:
 
 1. **Camada de Apresentação (Controllers)**: Responsável por receber as requisições HTTP e retornar respostas.
-2. **Camada de Serviços (Services)**: Contém a lógica de negócios e regras da aplicação.
-3. **Camada de Acesso a Dados (Data)**: Gerencia a persistência e recuperação de dados.
+2. **Camada de Serviços (Services)**: Contém a lógica de negócios, validações e regras da aplicação.
+3. **Camada de Acesso a Dados (Data)**: Gerencia a persistência, recuperação de dados e relacionamentos.
 4. **Camada de Domínio (Models)**: Define as entidades do domínio da aplicação.
 
-A implementação dos serviços (`AlunoService`, `CursoService`, `MatriculaService`, `CertificadoService`) permite a separação clara de responsabilidades e facilita a manutenção e testabilidade do código.
+## Validações Implementadas
+
+- Validações nos DTOs usando Data Annotations
+- Validações adicionais na camada de serviços
+- Verificação de campos obrigatórios
+- Validação de formatos de dados (email, tamanhos mínimos e máximos)
+- Prevenção contra dados vazios ou inválidos
 
 ## Endpoints Principais
 

@@ -87,6 +87,28 @@ namespace Api_HabeisEducacional.Services
         /// </summary>
         public async Task<CursoDTO> CreateAsync(CursoCreateDTO dto)
         {
+            // Validações adicionais
+            if (string.IsNullOrWhiteSpace(dto.Titulo))
+                throw new InvalidOperationException("O título do curso não pode estar vazio");
+            
+            if (dto.Titulo.Length < 3)
+                throw new InvalidOperationException("O título deve ter pelo menos 3 caracteres");
+            
+            if (dto.Preco < 0)
+                throw new InvalidOperationException("O preço não pode ser negativo");
+            
+            if (dto.Duracao <= 0)
+                throw new InvalidOperationException("A duração deve ser maior que zero");
+
+            // Remove espaços extras do início e fim
+            dto.Titulo = dto.Titulo.Trim();
+            if (dto.Descricao != null) dto.Descricao = dto.Descricao.Trim();
+            if (dto.Instrutor != null) dto.Instrutor = dto.Instrutor.Trim();
+
+            // Verifica se já existe curso com o mesmo título
+            if (await _db.Cursos.AnyAsync(c => c.Titulo == dto.Titulo))
+                throw new InvalidOperationException("Já existe um curso com este título");
+
             // Cria um novo curso com os dados do DTO
             var curso = new Curso
             {
@@ -118,10 +140,32 @@ namespace Api_HabeisEducacional.Services
         /// </summary>
         public async Task UpdateAsync(int id, CursoCreateDTO dto)
         {
+            // Validações adicionais
+            if (string.IsNullOrWhiteSpace(dto.Titulo))
+                throw new InvalidOperationException("O título do curso não pode estar vazio");
+            
+            if (dto.Titulo.Length < 3)
+                throw new InvalidOperationException("O título deve ter pelo menos 3 caracteres");
+            
+            if (dto.Preco < 0)
+                throw new InvalidOperationException("O preço não pode ser negativo");
+            
+            if (dto.Duracao <= 0)
+                throw new InvalidOperationException("A duração deve ser maior que zero");
+
+            // Remove espaços extras do início e fim
+            dto.Titulo = dto.Titulo.Trim();
+            if (dto.Descricao != null) dto.Descricao = dto.Descricao.Trim();
+            if (dto.Instrutor != null) dto.Instrutor = dto.Instrutor.Trim();
+
             // Busca o curso pelo ID
             var curso = await _db.Cursos.FindAsync(id);
             if (curso == null)
                 throw new KeyNotFoundException("Curso não encontrado");
+
+            // Verifica se o título já está em uso por outro curso
+            if (await _db.Cursos.AnyAsync(c => c.Titulo == dto.Titulo && c.ID != id))
+                throw new InvalidOperationException("Já existe outro curso com este título");
 
             // Atualiza os dados
             curso.Titulo = dto.Titulo;
@@ -131,18 +175,7 @@ namespace Api_HabeisEducacional.Services
             curso.Duracao = dto.Duracao;
 
             // Salva as alterações
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                // Verifica novamente se o curso existe
-                if (!await _db.Cursos.AnyAsync(c => c.ID == id))
-                    throw new KeyNotFoundException("Curso não encontrado");
-                else
-                    throw;
-            }
+            await _db.SaveChangesAsync();
         }
 
         /// <summary>

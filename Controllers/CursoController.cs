@@ -50,6 +50,66 @@ namespace Api_HabeisEducacional.Controllers
             */
         }
 
+        // GET: api/Cursos/with-relacionamentos
+        /// <summary>
+        /// Retorna todos os cursos COM seus relacionamentos (Matrículas e Certificados)
+        /// Demonstra o uso do Include para carregar relacionamentos Many-to-One
+        /// </summary>
+        [HttpGet("with-relacionamentos")]
+        public async Task<ActionResult<IEnumerable<object>>> GetCursosWithRelacionamentos()
+        {
+            var cursos = await _context.Cursos
+                .Include(c => c.Matriculas)    // ✅ INCLUDE: Carrega as matrículas do curso
+                    .ThenInclude(m => m.Aluno) // ✅ THEN INCLUDE: Carrega o aluno de cada matrícula
+                .Include(c => c.Certificados)  // ✅ INCLUDE: Carrega os certificados do curso
+                    .ThenInclude(cert => cert.Aluno) // ✅ THEN INCLUDE: Carrega o aluno de cada certificado
+                .Select(c => new
+                {
+                    // Dados do curso
+                    ID = c.ID,
+                    Titulo = c.Titulo,
+                    Descricao = c.Descricao,
+                    Instrutor = c.Instrutor,
+                    Preco = c.Preco,
+                    Duracao = c.Duracao,
+                    
+                    // Relacionamentos carregados
+                    Matriculas = c.Matriculas!.Select(m => new
+                    {
+                        ID = m.ID,
+                        Data_Matricula = m.Data_Matricula,
+                        Status = m.Status.ToString(),
+                        Aluno = new
+                        {
+                            ID = m.Aluno!.ID,
+                            Nome = m.Aluno.Nome,
+                            Email = m.Aluno.Email
+                        }
+                    }),
+                    
+                    Certificados = c.Certificados!.Select(cert => new
+                    {
+                        ID = cert.ID,
+                        Data_Emissao = cert.Data_Emissao,
+                        Codigo_Validacao = cert.Codigo_Validacao,
+                        Aluno = new
+                        {
+                            ID = cert.Aluno!.ID,
+                            Nome = cert.Aluno.Nome,
+                            Email = cert.Aluno.Email
+                        }
+                    }),
+                    
+                    // Estatísticas calculadas
+                    TotalMatriculas = c.Matriculas!.Count(),
+                    TotalCertificados = c.Certificados!.Count(),
+                    MatriculasAtivas = c.Matriculas!.Count(m => m.Status == StatusMatricula.Ativa)
+                })
+                .ToListAsync();
+
+            return Ok(cursos);
+        }
+
         // GET: api/Cursos/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CursoDTO>> GetCurso(int id)

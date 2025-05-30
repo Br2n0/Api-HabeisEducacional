@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 // VERSÃO ANTIGA - Imports necessários para a versão anterior
 /*
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,8 @@ using System.Text;
 */
 using Api_HabeisEducacional.DTOs;
 using Api_HabeisEducacional.Services;
+using Api_HabeisEducacional.Data;
+using Api_HabeisEducacional.Models;
 
 namespace Api_HabeisEducacional.Controllers
 {
@@ -26,12 +29,16 @@ namespace Api_HabeisEducacional.Controllers
         
         // VERSÃO NOVA: Acesso via camada de serviço
         private readonly IAlunoService _alunoService;
+        
+        // Adicionando contexto para demonstrar Include
+        private readonly AppDbContext _context;
 
-        // Construtor com injeção de dependência do serviço
-        public AlunosController(IAlunoService alunoService)
+        // Construtor com injeção de dependência do serviço e contexto
+        public AlunosController(IAlunoService alunoService, AppDbContext context)
         {
             // _context = context; // Removido na versão nova
             _alunoService = alunoService;
+            _context = context;
         }
 
         // GET: api/Alunos
@@ -53,6 +60,66 @@ namespace Api_HabeisEducacional.Controllers
                 })
                 .ToListAsync();
             */
+        }
+
+        // GET: api/Alunos/with-relacionamentos
+        /// <summary>
+        /// Retorna todos os alunos COM seus relacionamentos (Matrículas e Certificados)
+        /// Demonstra o uso do Include para carregar relacionamentos Many-to-One
+        /// </summary>
+        [HttpGet("with-relacionamentos")]
+        public async Task<ActionResult<IEnumerable<object>>> GetAlunosWithRelacionamentos()
+        {
+            var alunos = await _context.Alunos
+                .Include(a => a.Matriculas)     // ✅ INCLUDE: Carrega as matrículas do aluno
+                    .ThenInclude(m => m.Curso)  // ✅ THEN INCLUDE: Carrega o curso de cada matrícula
+                .Include(a => a.Certificados)   // ✅ INCLUDE: Carrega os certificados do aluno
+                    .ThenInclude(c => c.Curso)  // ✅ THEN INCLUDE: Carrega o curso de cada certificado
+                .Select(a => new
+                {
+                    // Dados do aluno
+                    ID = a.ID,
+                    Nome = a.Nome,
+                    Email = a.Email,
+                    Data_Cadastro = a.Data_Cadastro,
+                    
+                    // Relacionamentos carregados
+                    Matriculas = a.Matriculas!.Select(m => new
+                    {
+                        ID = m.ID,
+                        Data_Matricula = m.Data_Matricula,
+                        Status = m.Status.ToString(),
+                        Curso = new
+                        {
+                            ID = m.Curso!.ID,
+                            Titulo = m.Curso.Titulo,
+                            Preco = m.Curso.Preco,
+                            Duracao = m.Curso.Duracao
+                        }
+                    }),
+                    
+                    Certificados = a.Certificados!.Select(c => new
+                    {
+                        ID = c.ID,
+                        Data_Emissao = c.Data_Emissao,
+                        Codigo_Validacao = c.Codigo_Validacao,
+                        Curso = new
+                        {
+                            ID = c.Curso!.ID,
+                            Titulo = c.Curso.Titulo,
+                            Instrutor = c.Curso.Instrutor
+                        }
+                    }),
+                    
+                    // Estatísticas calculadas
+                    TotalMatriculas = a.Matriculas!.Count(),
+                    TotalCertificados = a.Certificados!.Count(),
+                    MatriculasAtivas = a.Matriculas!.Count(m => m.Status == StatusMatricula.Ativa),
+                    MatriculasConcluidas = a.Matriculas!.Count(m => m.Status == StatusMatricula.Concluida)
+                })
+                .ToListAsync();
+
+            return Ok(alunos);
         }
 
         // GET: api/Alunos/5

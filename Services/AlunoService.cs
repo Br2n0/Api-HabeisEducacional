@@ -88,6 +88,26 @@ namespace Api_HabeisEducacional.Services
         /// </summary>
         public async Task<AlunoDTO> CreateAsync(AlunoCreateDTO dto)
         {
+            // Validações adicionais
+            if (string.IsNullOrWhiteSpace(dto.Nome))
+                throw new InvalidOperationException("O nome não pode estar vazio");
+            
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                throw new InvalidOperationException("O email não pode estar vazio");
+            
+            if (string.IsNullOrWhiteSpace(dto.Senha))
+                throw new InvalidOperationException("A senha não pode estar vazia");
+            
+            if (dto.Nome.Length < 3)
+                throw new InvalidOperationException("O nome deve ter pelo menos 3 caracteres");
+            
+            if (dto.Senha.Length < 6)
+                throw new InvalidOperationException("A senha deve ter pelo menos 6 caracteres");
+
+            // Remove espaços extras do início e fim
+            dto.Nome = dto.Nome.Trim();
+            dto.Email = dto.Email.Trim();
+
             // Verifica se já existe aluno com o mesmo email
             if (await _db.Alunos.AnyAsync(a => a.Email == dto.Email))
                 throw new InvalidOperationException("Email já está em uso");
@@ -97,7 +117,7 @@ namespace Api_HabeisEducacional.Services
             {
                 Nome = dto.Nome,
                 Email = dto.Email,
-                Senha = HashSenha(dto.Senha),
+                Senha = dto.Senha,
                 Data_Cadastro = DateTime.Now
             };
 
@@ -120,6 +140,20 @@ namespace Api_HabeisEducacional.Services
         /// </summary>
         public async Task UpdateAsync(int id, AlunoCreateDTO dto)
         {
+            // Validações adicionais
+            if (string.IsNullOrWhiteSpace(dto.Nome))
+                throw new InvalidOperationException("O nome não pode estar vazio");
+            
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                throw new InvalidOperationException("O email não pode estar vazio");
+            
+            if (dto.Nome.Length < 3)
+                throw new InvalidOperationException("O nome deve ter pelo menos 3 caracteres");
+
+            // Remove espaços extras do início e fim
+            dto.Nome = dto.Nome.Trim();
+            dto.Email = dto.Email.Trim();
+
             // Busca o aluno pelo ID
             var aluno = await _db.Alunos.FindAsync(id);
             if (aluno == null)
@@ -135,7 +169,12 @@ namespace Api_HabeisEducacional.Services
             
             // Só atualiza a senha se uma nova senha foi fornecida
             if (!string.IsNullOrEmpty(dto.Senha))
-                aluno.Senha = HashSenha(dto.Senha);
+            {
+                if (dto.Senha.Length < 6)
+                    throw new InvalidOperationException("A senha deve ter pelo menos 6 caracteres");
+                    
+                aluno.Senha = dto.Senha;
+            }
 
             // Salva as alterações
             await _db.SaveChangesAsync();
@@ -171,7 +210,7 @@ namespace Api_HabeisEducacional.Services
                 .FirstOrDefaultAsync(a => a.Email == dto.Email);
 
             // Verifica se encontrou o aluno e se a senha está correta
-            if (aluno == null || aluno.Senha != HashSenha(dto.Senha))
+            if (aluno == null || aluno.Senha != dto.Senha)
                 return null;
 
             // Retorna os dados do aluno autenticado
@@ -182,23 +221,6 @@ namespace Api_HabeisEducacional.Services
                 Email = aluno.Email,
                 Data_Cadastro = aluno.Data_Cadastro
             };
-        }
-
-        /// <summary>
-        /// Método auxiliar para gerar o hash da senha
-        /// </summary>
-        private string HashSenha(string senha)
-        {
-            // Usa SHA256 para criar um hash da senha
-            using var sha256 = SHA256.Create();
-            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(senha));
-            
-            // Converte os bytes para string hexadecimal
-            var builder = new StringBuilder();
-            for (int i = 0; i < bytes.Length; i++)
-                builder.Append(bytes[i].ToString("x2"));
-                
-            return builder.ToString();
         }
     }
 } 

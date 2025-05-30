@@ -32,7 +32,16 @@ builder.Services.AddCors(options =>
 });
 
 // Adiciona os controladores para a API
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Configuração para ignorar referências circulares
+        // Isso evita loops infinitos ao serializar relacionamentos
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        
+        // Configuração adicional para melhor legibilidade do JSON
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
 // Configuração do Swagger para documentação da API
 builder.Services.AddEndpointsApiExplorer();

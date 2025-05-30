@@ -1,9 +1,8 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35931.197 d17.13
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api-HabeisEducacional", "Api-HabeisEducacional\Api-HabeisEducacional.csproj", "{0DD3245C-5908-4CA7-82BF-39231A92C9ED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api-HabeisEducacional", "Api-HabeisEducacional.csproj", "{0DD3245C-5908-4CA7-82BF-39231A92C9ED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
