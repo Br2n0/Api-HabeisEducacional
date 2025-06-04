@@ -1,4 +1,7 @@
+using System;
 using System.ComponentModel.DataAnnotations;
+using Api_HabeisEducacional.Models.Common;
+using Api_HabeisEducacional.Models.Events;
 
 namespace Api_HabeisEducacional.Models
 {
@@ -28,8 +31,9 @@ namespace Api_HabeisEducacional.Models
     /// Entidade que representa a matrícula de um aluno em um curso específico
     /// Atua como entidade de relacionamento Many-to-Many materializada entre Aluno e Curso
     /// Configurada com CASCADE DELETE no curso e RESTRICT no aluno (ver AppDbContext)
+    /// 🔄 MELHORIA: Agora herda de EntidadeBase para suportar Eventos de Domínio
     /// </summary>
-    public class Matricula
+    public class Matricula : EntidadeBase
     {
         /// <summary>
         /// Identificador único da matrícula
@@ -58,12 +62,77 @@ namespace Api_HabeisEducacional.Models
         [Required]
         public int Aluno_ID { get; set; }
 
+        // ═══════════════════════════════════════════════════════════════
+        // 🔄 CONSTRUTORES
+        // ═══════════════════════════════════════════════════════════════
+        
+        /// <summary>
+        /// Construtor padrão necessário para o Entity Framework
+        /// Inicializa com status Ativa por padrão
+        /// </summary>
+        public Matricula()
+        {
+            _status = StatusMatricula.Ativa;
+        }
+
+        /// <summary>
+        /// Construtor para criar uma nova matrícula
+        /// </summary>
+        /// <param name="alunoId">ID do aluno</param>
+        /// <param name="cursoId">ID do curso</param>
+        /// <param name="dataMatricula">Data da matrícula</param>
+        public Matricula(int alunoId, int cursoId, DateTime dataMatricula)
+        {
+            Aluno_ID = alunoId;
+            Curso_ID = cursoId;
+            Data_Matricula = dataMatricula;
+            _status = StatusMatricula.Ativa;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🔄 MELHORIA: STATUS COM EVENTOS DE DOMÍNIO
+        // ═══════════════════════════════════════════════════════════════
+        
+        /// <summary>
+        /// Campo privado para armazenar o status atual
+        /// Usado pelo property público para controlar mudanças
+        /// </summary>
+        private StatusMatricula _status;
+        
+        /// <summary>
+        /// Status atual da matrícula com EVENTOS DE DOMÍNIO
+        /// BENEFÍCIOS DOS EVENTOS:
+        /// - Rastreabilidade de mudanças de estado
+        /// - Possibilidade de triggers automáticos (emails, notificações)
+        /// - Auditoria automática de alterações
+        /// - Desacoplamento de efeitos colaterais
+        /// - Facilita integração com outros sistemas
+        /// </summary>
+        [Required]
+        public StatusMatricula Status 
+        { 
+            get => _status;
+            private set
+            {
+                // Só dispara evento se houve mudança real de status
+                if (_status != value)
+                {
+                    var statusAntigo = _status;
+                    _status = value;
+                    // Dispara evento de domínio para rastrear a mudança
+                    AdicionarEvento(new MatriculaStatusAlteradoEvent(ID, statusAntigo, value));
+                }
+            }
+        }
+
+        /* CÓDIGO ANTERIOR (mantido para estudo):
         /// <summary>
         /// Status atual da matrícula
         /// Convertido para string no banco de dados via Fluent API
         /// </summary>
         [Required]
         public StatusMatricula Status { get; set; } = StatusMatricula.Ativa; // Status padrão
+        */
 
         // ═══════════════════════════════════════════════════════════════
         // PROPRIEDADES DE NAVEGAÇÃO
@@ -83,7 +152,7 @@ namespace Api_HabeisEducacional.Models
         public Aluno? Aluno { get; set; }
 
         // ═══════════════════════════════════════════════════════════════
-        // MÉTODOS UTILITÁRIOS
+        // 🔄 MÉTODOS DE DOMÍNIO MELHORADOS
         // ═══════════════════════════════════════════════════════════════
 
         /// <summary>
@@ -105,44 +174,72 @@ namespace Api_HabeisEducacional.Models
         public bool IsCancelada() => Status == StatusMatricula.Cancelada;
 
         /// <summary>
-        /// Marca a matrícula como concluída
+        /// 🔄 MÉTODO MELHORADO: Marca a matrícula como concluída
+        /// BENEFÍCIOS:
+        /// - Validação de regras de negócio (só pode concluir se estiver ativa)
+        /// - Disparo automático de evento de domínio
+        /// - Encapsulamento da lógica de transição de estado
         /// </summary>
+        public void Concluir()
+        {
+            if (Status != StatusMatricula.Ativa)
+                throw new InvalidOperationException("Apenas matrículas ativas podem ser concluídas");
+            
+            Status = StatusMatricula.Concluida; // Dispara evento automaticamente
+        }
+
+        /* MÉTODO ANTERIOR (mantido para estudo):
         public void MarcarComoConcluida() => Status = StatusMatricula.Concluida;
+        */
 
         /// <summary>
-        /// Cancela a matrícula
+        /// 🔄 MÉTODO MELHORADO: Cancela a matrícula
+        /// BENEFÍCIOS:
+        /// - Validação de regras de negócio (não pode cancelar se já concluída)
+        /// - Disparo automático de evento de domínio
+        /// - Proteção contra operações inválidas
         /// </summary>
+        public void Cancelar()
+        {
+            if (Status == StatusMatricula.Concluida)
+                throw new InvalidOperationException("Matrículas concluídas não podem ser canceladas");
+            
+            Status = StatusMatricula.Cancelada; // Dispara evento automaticamente
+        }
+
+        /* MÉTODO ANTERIOR (mantido para estudo):
         public void Cancelar() => Status = StatusMatricula.Cancelada;
+        */
     }
 }
 
 /* 
 ═══════════════════════════════════════════════════════════════════════════════════
-📋 DOCUMENTAÇÃO DA ENTIDADE MATRICULA
+📋 DOCUMENTAÇÃO DAS MELHORIAS IMPLEMENTADAS
 ═══════════════════════════════════════════════════════════════════════════════════
 
-🎯 PROPÓSITO:
-   - Materializa o relacionamento Many-to-Many entre Aluno e Curso
-   - Armazena informações específicas da matrícula (data, status)
-   - Permite controle do ciclo de vida da participação do aluno no curso
+1️⃣ EVENTOS DE DOMÍNIO:
+   ✅ Rastreamento automático de mudanças de status
+   ✅ Possibilidade de triggers (emails, notificações)
+   ✅ Auditoria automática
+   ✅ Desacoplamento de efeitos colaterais
 
-🔗 RELACIONAMENTOS:
-   - Matricula → Curso (N:1) com CASCADE DELETE
-   - Matricula → Aluno (N:1) com RESTRICT DELETE
-   
-📊 ÍNDICES (Configurados no AppDbContext):
-   - Índice único composto (Aluno_ID + Curso_ID) previne matrículas duplicadas
-   
-⚙️ COMPORTAMENTOS:
-   - Status padrão: Ativa
-   - Data_Matricula preenchida automaticamente
-   - Enum convertido para string no banco
-   - Métodos utilitários para verificação de status
+2️⃣ VALIDAÇÕES DE DOMÍNIO:
+   ✅ Regras de negócio encapsuladas nos métodos
+   ✅ Proteção contra transições inválidas de estado
+   ✅ Exceções com mensagens claras
 
-🔄 CICLO DE VIDA:
-   1. Ativa (padrão) → Estudando
-   2. Concluida → Curso finalizado com sucesso
-   3. Cancelada → Desistência ou cancelamento administrativo
+3️⃣ ENCAPSULAMENTO:
+   ✅ Status privado com controle via property
+   ✅ Métodos específicos para cada transição
+   ✅ Lógica de negócio dentro da entidade
+
+🎯 BENEFÍCIOS OBTIDOS:
+- Código mais seguro e consistente
+- Melhor rastreabilidade de mudanças
+- Facilita testes unitários
+- Prepara para integrações futuras
+- Melhora a manutenibilidade
 
 ═══════════════════════════════════════════════════════════════════════════════════
 */

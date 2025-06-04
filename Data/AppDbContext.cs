@@ -1,5 +1,9 @@
 using Api_HabeisEducacional.Models;
 using Microsoft.EntityFrameworkCore;
+using Api_HabeisEducacional.Models.Common;
+using Api_HabeisEducacional.Models.Events;
+using Api_HabeisEducacional.Models.ValueObjects;
+using Api_HabeisEducacional.DTOs;
 
 namespace Api_HabeisEducacional.Data
 {
@@ -7,6 +11,7 @@ namespace Api_HabeisEducacional.Data
     /// Classe de contexto do Entity Framework Core para acesso ao banco de dados
     /// Define as entidades e configura seus relacionamentos com comportamentos otimizados
     /// Implementa cascade delete e restrições de integridade referencial
+    /// 🔄 MELHORIA: Agora processa Eventos de Domínio automaticamente
     /// </summary>
     public class AppDbContext : DbContext
     {
@@ -49,6 +54,33 @@ namespace Api_HabeisEducacional.Data
         /// <param name="modelBuilder">Builder usado para configurar o modelo</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // ═══════════════════════════════════════════════════════════════
+            // 🔧 CONFIGURAÇÕES DE CLASSES IGNORADAS PELO EF
+            // ═══════════════════════════════════════════════════════════════
+            
+            // Ignora classes base/abstratas que não devem ser mapeadas como tabelas
+            modelBuilder.Ignore<DomainEvent>();     // Eventos de domínio são conceitos temporários
+            modelBuilder.Ignore<EntidadeBase>();    // Classe base abstrata
+            modelBuilder.Ignore<ValueObject>();     // Value objects não são entidades
+            
+            // Ignora eventos específicos de domínio
+            modelBuilder.Ignore<MatriculaStatusAlteradoEvent>(); // Evento específico
+            
+            // Ignora value objects específicos
+            modelBuilder.Ignore<Email>(); // Value object para email
+            
+            // Ignora DTOs (Data Transfer Objects) que não são entidades
+            modelBuilder.Ignore<AlunoDTO>();
+            modelBuilder.Ignore<AlunoCreateDTO>();
+            modelBuilder.Ignore<AlunoLoginDTO>();
+            modelBuilder.Ignore<CursoDTO>();
+            modelBuilder.Ignore<CursoCreateDTO>();
+            modelBuilder.Ignore<MatriculaDTO>();
+            modelBuilder.Ignore<MatriculaCreateDTO>();
+            modelBuilder.Ignore<MatriculaUpdateDTO>();
+            modelBuilder.Ignore<CertificadoDTO>();
+            modelBuilder.Ignore<CertificadoCreateDTO>();
+            
             #region Configurações da Entidade Aluno
 
             /// <summary>
@@ -264,8 +296,96 @@ namespace Api_HabeisEducacional.Data
         }
 
         /// <summary>
-        /// Versão assíncrona do SaveChanges com mesmos comportamentos customizados
+        /// 🔄 VERSÃO MELHORADA: SaveChangesAsync com processamento de Eventos de Domínio
+        /// BENEFÍCIOS DO PROCESSAMENTO DE EVENTOS:
+        /// - Rastreabilidade automática de mudanças importantes
+        /// - Possibilidade de triggers automáticos (emails, notificações)
+        /// - Auditoria detalhada de operações de negócio
+        /// - Desacoplamento de efeitos colaterais
+        /// - Facilita integração com outros sistemas
         /// </summary>
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            // ═══════════════════════════════════════════════════════════════
+            // ETAPA 1: COLETA DE EVENTOS ANTES DE SALVAR
+            // ═══════════════════════════════════════════════════════════════
+            
+            /// <summary>
+            /// Captura todas as entidades que possuem eventos de domínio pendentes
+            /// Importante fazer isso ANTES de salvar, pois após o SaveChanges
+            /// o estado das entidades pode mudar
+            /// </summary>
+            var entidades = ChangeTracker.Entries<EntidadeBase>()
+                .Where(e => e.Entity.Eventos.Any()) // Filtra apenas entidades com eventos
+                .Select(e => e.Entity)
+                .ToList();
+
+            // ═══════════════════════════════════════════════════════════════
+            // ETAPA 2: SALVAMENTO NO BANCO DE DADOS
+            // ═══════════════════════════════════════════════════════════════
+            
+            /// <summary>
+            /// Executa o salvamento normal do Entity Framework
+            /// Se der erro aqui, os eventos não são processados (rollback automático)
+            /// </summary>
+            var resultado = await base.SaveChangesAsync(cancellationToken);
+
+            // ═══════════════════════════════════════════════════════════════
+            // ETAPA 3: PROCESSAMENTO DE EVENTOS APÓS SUCESSO
+            // ═══════════════════════════════════════════════════════════════
+            
+            /// <summary>
+            /// Processa os eventos apenas APÓS o salvamento bem-sucedido
+            /// Isso garante que os eventos só sejam disparados se a transação foi commitada
+            /// </summary>
+            foreach (var entidade in entidades)
+            {
+                foreach (var evento in entidade.Eventos)
+                {
+                    // Aqui você pode adicionar diferentes tipos de processamento
+                    // baseado no tipo do evento (Strategy Pattern)
+                    
+                    if (evento is MatriculaStatusAlteradoEvent statusEvento)
+                    {
+                        // EXEMPLO DE PROCESSAMENTO: Log da mudança
+                        // Em produção, isso pode ser:
+                        // - Envio de email
+                        // - Notificação push
+                        // - Integração com outros sistemas
+                        // - Atualização de dashboards
+                        // - Geração de relatórios
+                        
+                        Console.WriteLine($"🔄 EVENTO: Matrícula {statusEvento.MatriculaId} mudou de {statusEvento.StatusAntigo} para {statusEvento.NovoStatus} em {statusEvento.OcorreuEm:yyyy-MM-dd HH:mm:ss}");
+                        
+                        // Exemplo de lógica específica por tipo de mudança
+                        switch (statusEvento.NovoStatus)
+                        {
+                            case StatusMatricula.Concluida:
+                                Console.WriteLine("📧 Ação: Enviar email de parabéns pela conclusão");
+                                Console.WriteLine("🏆 Ação: Verificar elegibilidade para certificado");
+                                break;
+                            case StatusMatricula.Cancelada:
+                                Console.WriteLine("📧 Ação: Enviar pesquisa de satisfação");
+                                Console.WriteLine("💰 Ação: Processar possível reembolso");
+                                break;
+                        }
+                    }
+                    
+                    // Aqui você pode adicionar outros tipos de eventos:
+                    // - CertificadoEmitidoEvent
+                    // - AlunoMatriculadoEvent
+                    // - CursoCriadoEvent
+                    // etc.
+                }
+                
+                // Limpa os eventos processados para evitar reprocessamento
+                entidade.LimparEventos();
+            }
+
+            return resultado;
+        }
+
+        /* CÓDIGO ANTERIOR (mantido para estudo):
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             // Adiciona timestamp automático em criações/atualizações
@@ -293,6 +413,7 @@ namespace Api_HabeisEducacional.Data
 
             return await base.SaveChangesAsync(cancellationToken);
         }
+        */
     }
 
     /* 

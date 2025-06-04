@@ -174,14 +174,8 @@ namespace Api_HabeisEducacional.Services
             if (matriculaExistente != null)
                 throw new InvalidOperationException("Aluno já está matriculado neste curso");
 
-            // Cria uma nova matrícula
-            var matricula = new Matricula
-            {
-                Data_Matricula = DateTime.Now,
-                Curso_ID = dto.Curso_ID,
-                Aluno_ID = dto.Aluno_ID,
-                Status = StatusMatricula.Ativa
-            };
+            // Cria uma nova matrícula usando o construtor
+            var matricula = new Matricula(dto.Aluno_ID, dto.Curso_ID, DateTime.Now);
 
             // Adiciona no banco e salva
             _db.Matriculas.Add(matricula);
@@ -210,8 +204,29 @@ namespace Api_HabeisEducacional.Services
             if (matricula == null)
                 throw new KeyNotFoundException("Matrícula não encontrada");
 
-            // Atualiza o status
-            matricula.Status = dto.Status;
+            // Atualiza o status usando os métodos de domínio apropriados
+            switch (dto.Status)
+            {
+                case StatusMatricula.Concluida:
+                    matricula.Concluir();
+                    break;
+                case StatusMatricula.Cancelada:
+                    matricula.Cancelar();
+                    break;
+                case StatusMatricula.Ativa:
+                    // Para reativar uma matrícula, precisamos verificar se é possível
+                    if (matricula.Status == StatusMatricula.Cancelada)
+                    {
+                        // Usando reflexão para definir o status pois não há método público para reativar
+                        var statusField = typeof(Matricula).GetField("_status", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        statusField?.SetValue(matricula, StatusMatricula.Ativa);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Não é possível reativar uma matrícula concluída");
+                    }
+                    break;
+            }
 
             // Salva as alterações
             await _db.SaveChangesAsync();
@@ -231,8 +246,8 @@ namespace Api_HabeisEducacional.Services
             if (matricula.Status == StatusMatricula.Cancelada)
                 throw new InvalidOperationException("Matrícula já está cancelada");
 
-            // Atualiza o status para cancelada
-            matricula.Status = StatusMatricula.Cancelada;
+            // Usa o método de domínio para cancelar
+            matricula.Cancelar();
 
             // Salva as alterações
             await _db.SaveChangesAsync();
@@ -252,8 +267,8 @@ namespace Api_HabeisEducacional.Services
             if (matricula.Status != StatusMatricula.Ativa)
                 throw new InvalidOperationException("Apenas matrículas ativas podem ser concluídas");
 
-            // Atualiza o status para concluída
-            matricula.Status = StatusMatricula.Concluida;
+            // Usa o método de domínio para concluir
+            matricula.Concluir();
 
             // Salva as alterações
             await _db.SaveChangesAsync();

@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Api_HabeisEducacional.Models.ValueObjects;
 
 namespace Api_HabeisEducacional.Models
 {
@@ -18,11 +21,33 @@ namespace Api_HabeisEducacional.Models
         /// <summary>
         /// Nome completo do aluno
         /// Campo obrigatório com limite de 100 caracteres
+        /// MELHORIA: Adicionado MinimumLength = 3 para garantir nomes válidos
         /// </summary>
         [Required]
-        [StringLength(100)]
+        [StringLength(100, MinimumLength = 3)]
         public string Nome { get; set; } = string.Empty;
 
+        // ═══════════════════════════════════════════════════════════════
+        // 🔄 MELHORIA: EMAIL COMO VALUE OBJECT
+        // ═══════════════════════════════════════════════════════════════
+        
+        /// <summary>
+        /// Email único do aluno implementado como Value Object
+        /// BENEFÍCIOS DO VALUE OBJECT:
+        /// - Validação automática de formato de email
+        /// - Normalização automática (lowercase, trim)
+        /// - Encapsulamento das regras de negócio
+        /// - Reutilização em outras partes do sistema
+        /// - Imutabilidade e thread-safety
+        /// </summary>
+        private string _email = string.Empty;
+        public string Email 
+        { 
+            get => _email;
+            set => _email = ValueObjects.Email.Criar(value).ToString(); // Aplica validações do Value Object
+        }
+
+        /* CÓDIGO ANTERIOR (mantido para estudo):
         /// <summary>
         /// Email único do aluno para login e comunicação
         /// Configurado como índice único no AppDbContext
@@ -32,13 +57,15 @@ namespace Api_HabeisEducacional.Models
         [StringLength(150)]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
+        */
 
         /// <summary>
         /// Senha criptografada do aluno
         /// Campo obrigatório com limite de 255 caracteres
+        /// MELHORIA: Adicionado MinimumLength = 6 para garantir senhas seguras
         /// </summary>
         [Required]
-        [StringLength(255)]
+        [StringLength(255, MinimumLength = 6)]
         public string Senha { get; set; } = string.Empty;
 
         /// <summary>
@@ -68,7 +95,7 @@ namespace Api_HabeisEducacional.Models
         public ICollection<Certificado>? Certificados { get; set; }
 
         // ═══════════════════════════════════════════════════════════════
-        // MÉTODOS UTILITÁRIOS
+        // 🔄 MÉTODOS DE DOMÍNIO MELHORADOS
         // ═══════════════════════════════════════════════════════════════
 
         /// <summary>
@@ -117,24 +144,40 @@ namespace Api_HabeisEducacional.Models
         }
 
         /// <summary>
-        /// Verifica se o aluno possui matrícula ativa em um curso específico
+        /// 🔄 MÉTODO MELHORADO: Verifica se o aluno possui matrícula ativa em um curso específico
+        /// BENEFÍCIOS: Lógica de negócio encapsulada na entidade, consulta otimizada
         /// </summary>
         /// <param name="cursoId">ID do curso a verificar</param>
         /// <returns>True se possui matrícula ativa no curso</returns>
+        public bool PossuiMatriculaAtiva(int cursoId)
+        {
+            return Matriculas?.Any(m => m.Curso_ID == cursoId && m.Status == StatusMatricula.Ativa) ?? false;
+        }
+
+        /* MÉTODO ANTERIOR (mantido para estudo):
         public bool TemMatriculaAtivaEm(int cursoId)
         {
             return GetMatriculasAtivas().Any(m => m.Curso_ID == cursoId);
         }
+        */
 
         /// <summary>
-        /// Verifica se o aluno já possui certificado para um curso específico
+        /// 🔄 MÉTODO MELHORADO: Verifica se o aluno pode se certificar em um curso específico
+        /// REGRA DE NEGÓCIO: Só pode se certificar quem concluiu o curso
         /// </summary>
         /// <param name="cursoId">ID do curso a verificar</param>
-        /// <returns>True se possui certificado do curso</returns>
+        /// <returns>True se pode se certificar no curso</returns>
+        public bool PodeSeCertificar(int cursoId)
+        {
+            return Matriculas?.Any(m => m.Curso_ID == cursoId && m.Status == StatusMatricula.Concluida) ?? false;
+        }
+
+        /* MÉTODO ANTERIOR (mantido para estudo):
         public bool TemCertificadoDo(int cursoId)
         {
             return Certificados?.Any(c => c.Curso_ID == cursoId) ?? false;
         }
+        */
 
         /// <summary>
         /// Calcula há quantos dias o aluno está cadastrado no sistema
