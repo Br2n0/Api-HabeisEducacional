@@ -146,6 +146,12 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPost]
         public async Task<ActionResult<CursoDTO>> PostCurso(CursoCreateDTO cursoDto)
         {
+            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // VERSÃO NOVA: Usando o serviço
             try 
             {
@@ -186,6 +192,12 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCurso(int id, CursoCreateDTO cursoDto)
         {
+            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // VERSÃO NOVA: Usando o serviço
             try
             {

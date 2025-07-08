@@ -22,8 +22,11 @@ namespace Api_HabeisEducacional.Services
         // Cria um novo aluno
         Task<AlunoDTO> CreateAsync(AlunoCreateDTO dto);
         
-        // Atualiza um aluno existente
+        // Atualiza um aluno existente (todos os campos obrigatórios)
         Task UpdateAsync(int id, AlunoCreateDTO dto);
+        
+        // Atualiza parcialmente um aluno existente (campos opcionais)
+        Task UpdatePartialAsync(int id, AlunoUpdateDTO dto);
         
         // Remove um aluno do sistema
         Task DeleteAsync(int id);
@@ -236,6 +239,44 @@ namespace Api_HabeisEducacional.Services
             ✅ Menos linhas de código para manter
             ✅ Consistência com padrão de mapeamento da aplicação
             */
+
+            // Salva as alterações
+            await _db.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Atualiza parcialmente os dados de um aluno existente
+        /// Permite atualizar apenas os campos fornecidos (não-nulos)
+        /// </summary>
+        public async Task UpdatePartialAsync(int id, AlunoUpdateDTO dto)
+        {
+            // Busca o aluno pelo ID
+            var aluno = await _db.Alunos.FindAsync(id);
+            if (aluno == null)
+                throw new KeyNotFoundException("Aluno não encontrado");
+
+            // Atualiza apenas os campos fornecidos no DTO
+            if (!string.IsNullOrWhiteSpace(dto.Nome))
+            {
+                if (dto.Nome.Length < 3)
+                    throw new InvalidOperationException("O nome deve ter pelo menos 3 caracteres");
+                aluno.Nome = dto.Nome.Trim();
+            }
+            
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                // Verifica se o email já está em uso por outro aluno
+                if (await _db.Alunos.AnyAsync(a => a.Email == dto.Email && a.ID != id))
+                    throw new InvalidOperationException("Email já está em uso por outro aluno");
+                aluno.Email = dto.Email.Trim();
+            }
+            
+            if (!string.IsNullOrWhiteSpace(dto.Senha))
+            {
+                if (dto.Senha.Length < 6)
+                    throw new InvalidOperationException("A senha deve ter pelo menos 6 caracteres");
+                aluno.Senha = dto.Senha;
+            }
 
             // Salva as alterações
             await _db.SaveChangesAsync();

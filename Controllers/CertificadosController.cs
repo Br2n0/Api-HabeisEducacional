@@ -164,6 +164,12 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPost]
         public async Task<ActionResult<CertificadoDTO>> PostCertificado(CertificadoCreateDTO certificadoDTO)
         {
+            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // Comentado: Acesso direto ao banco de dados
             /*
             // Verifica se o aluno existe

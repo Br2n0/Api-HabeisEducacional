@@ -156,6 +156,12 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPost]
         public async Task<ActionResult<AlunoDTO>> PostAluno(AlunoCreateDTO alunoDto)
         {
+            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // VERSÃO NOVA: Usando o serviço
             try
             {
@@ -199,6 +205,12 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAluno(int id, AlunoCreateDTO alunoDto)
         {
+            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // VERSÃO NOVA: Usando o serviço
             try
             {
@@ -296,6 +308,34 @@ namespace Api_HabeisEducacional.Controllers
 
             return NoContent();
             */
+        }
+
+        // PATCH: api/Alunos/5
+        /// <summary>
+        /// Atualiza parcialmente um aluno - permite atualizar apenas os campos desejados
+        /// </summary>
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchAluno(int id, AlunoUpdateDTO alunoDto)
+        {
+            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _alunoService.UpdatePartialAsync(id, alunoDto);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // POST: api/Alunos/login

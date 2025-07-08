@@ -50,4 +50,7 @@ Thumbs.db
 coverage/
 *.coverage
 *.coveragexml
-TestResults/ 
+TestResults/
+
+# Arquivos de documentação markdown
+*.md 

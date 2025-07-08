@@ -131,6 +131,12 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPost]
         public async Task<ActionResult<MatriculaDTO>> PostMatricula(MatriculaCreateDTO matriculaDto)
         {
+            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // Comentado: Acesso direto ao banco de dados
             /*
             // Verificar se o aluno existe
@@ -204,6 +210,12 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPut("{id}/status")]
         public async Task<IActionResult> AtualizarStatusMatricula(int id, MatriculaUpdateDTO matriculaDto)
         {
+            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // Comentado: Acesso direto ao banco de dados
             /*
             var matricula = await _context.Matriculas.FindAsync(id);
