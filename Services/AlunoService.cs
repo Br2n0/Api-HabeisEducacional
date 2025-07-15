@@ -4,6 +4,7 @@ using Api_HabeisEducacional.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using System.Linq; // ✅ NOVO: Para usar Any() na validação de senha
 using AutoMapper; // ✅ NOVO: Import do AutoMapper
 
 namespace Api_HabeisEducacional.Services
@@ -139,8 +140,8 @@ namespace Api_HabeisEducacional.Services
             if (dto.Nome.Length < 3)
                 throw new InvalidOperationException("O nome deve ter pelo menos 3 caracteres");
             
-            if (dto.Senha.Length < 6)
-                throw new InvalidOperationException("A senha deve ter pelo menos 6 caracteres");
+            // 🔒 NOVA VALIDAÇÃO DE SENHA ROBUSTA (igual ao frontend)
+            ValidarSenhaSegura(dto.Senha);
 
             // Remove espaços extras do início e fim
             dto.Nome = dto.Nome.Trim();
@@ -335,6 +336,27 @@ namespace Api_HabeisEducacional.Services
             ✅ Facilita futuras mudanças no AlunoDTO
             ✅ Padrão uniforme de conversões na aplicação
             */
+        }
+
+        /// <summary>
+        /// Valida se a senha atende aos critérios de segurança
+        /// REGRAS DE SEGURANÇA (igual ao frontend):
+        /// - Mínimo 6 caracteres
+        /// - Pelo menos 1 letra (a-z ou A-Z)
+        /// - Pelo menos 1 número (0-9)
+        /// </summary>
+        /// <param name="senha">Senha a ser validada</param>
+        /// <exception cref="InvalidOperationException">Se a senha não atender aos critérios</exception>
+        private void ValidarSenhaSegura(string senha)
+        {
+            if (senha.Length < 6)
+                throw new InvalidOperationException("A senha deve ter pelo menos 6 caracteres");
+            
+            if (!senha.Any(char.IsLetter))
+                throw new InvalidOperationException("A senha deve conter pelo menos uma letra");
+            
+            if (!senha.Any(char.IsDigit))
+                throw new InvalidOperationException("A senha deve conter pelo menos um número");
         }
     }
 } 

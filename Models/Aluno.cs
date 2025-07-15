@@ -69,6 +69,13 @@ namespace Api_HabeisEducacional.Models
         public string Senha { get; set; } = string.Empty;
 
         /// <summary>
+        /// URL da foto do perfil do aluno
+        /// Campo opcional para upload de foto de perfil
+        /// </summary>
+        [StringLength(500)]
+        public string? FotoUrl { get; set; }
+
+        /// <summary>
         /// Data e hora de cadastro do aluno no sistema
         /// Preenchido automaticamente pelo contexto (SaveChanges override)
         /// </summary>

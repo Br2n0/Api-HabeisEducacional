@@ -9,6 +9,11 @@ namespace Api_HabeisEducacional.DTOs
         public int Curso_ID { get; set; }
         public int Aluno_ID { get; set; }
         public string Codigo_Validacao { get; set; } = string.Empty;
+        public string? Area { get; set; }
+        public string? Nivel { get; set; }
+        public string? Documento { get; set; }
+        public decimal? NotaFinal { get; set; }
+        public int? CargaHoraria { get; set; }
         public string CursoTitulo { get; set; } = string.Empty;
         public string AlunoNome { get; set; } = string.Empty;
     }
@@ -22,6 +27,39 @@ namespace Api_HabeisEducacional.DTOs
         [Required(ErrorMessage = "O ID do aluno é obrigatório")]
         [Range(1, int.MaxValue, ErrorMessage = "ID do aluno inválido")]
         public int Aluno_ID { get; set; }
+
+        [StringLength(100, ErrorMessage = "A área não pode ter mais que 100 caracteres")]
+        public string? Area { get; set; }
+
+        [StringLength(50, ErrorMessage = "O nível não pode ter mais que 50 caracteres")]
+        public string? Nivel { get; set; }
+
+        [StringLength(100, ErrorMessage = "O documento não pode ter mais que 100 caracteres")]
+        public string? Documento { get; set; }
+
+        [Range(0, 10, ErrorMessage = "A nota final deve estar entre 0 e 10")]
+        public decimal? NotaFinal { get; set; }
+
+        [Range(1, 9999, ErrorMessage = "A carga horária deve estar entre 1 e 9999 horas")]
+        public int? CargaHoraria { get; set; }
+    }
+
+    public class CertificadoUpdateDTO
+    {
+        [StringLength(100, ErrorMessage = "A área não pode ter mais que 100 caracteres")]
+        public string? Area { get; set; }
+
+        [StringLength(50, ErrorMessage = "O nível não pode ter mais que 50 caracteres")]
+        public string? Nivel { get; set; }
+
+        [StringLength(100, ErrorMessage = "O documento não pode ter mais que 100 caracteres")]
+        public string? Documento { get; set; }
+
+        [Range(0, 10, ErrorMessage = "A nota final deve estar entre 0 e 10")]
+        public decimal? NotaFinal { get; set; }
+
+        [Range(1, 9999, ErrorMessage = "A carga horária deve estar entre 1 e 9999 horas")]
+        public int? CargaHoraria { get; set; }
     }
     
     public class CertificadoValidacaoDTO

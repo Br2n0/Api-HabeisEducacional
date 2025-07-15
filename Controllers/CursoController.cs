@@ -192,7 +192,7 @@ namespace Api_HabeisEducacional.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCurso(int id, CursoCreateDTO cursoDto)
         {
-            // ✅ VALIDAÇÃO: Verificar ModelState antes de processar
+            // Verificar ModelState antes de processar
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);

@@ -50,6 +50,14 @@ namespace Api_HabeisEducacional.Mappings
             CreateMap<AlunoCreateDTO, Aluno>()
                 .ForMember(dest => dest.ID, opt => opt.Ignore()) // ID é auto-gerado
                 .ForMember(dest => dest.Data_Cadastro, opt => opt.Ignore()) // Data é auto-preenchida
+                .ForMember(dest => dest.FotoUrl, opt => opt.Ignore()) // FotoUrl não é fornecida na criação
+                .ForMember(dest => dest.Matriculas, opt => opt.Ignore()) // Coleções de navegação ignoradas
+                .ForMember(dest => dest.Certificados, opt => opt.Ignore());
+
+            // Mapeamento AlunoUpdateDTO → Aluno (usado na atualização)
+            CreateMap<AlunoUpdateDTO, Aluno>()
+                .ForMember(dest => dest.ID, opt => opt.Ignore()) // ID não é alterado
+                .ForMember(dest => dest.Data_Cadastro, opt => opt.Ignore()) // Data de cadastro não muda
                 .ForMember(dest => dest.Matriculas, opt => opt.Ignore()) // Coleções de navegação ignoradas
                 .ForMember(dest => dest.Certificados, opt => opt.Ignore());
 
@@ -164,6 +172,16 @@ namespace Api_HabeisEducacional.Mappings
                 .ForMember(dest => dest.ID, opt => opt.Ignore()) // ID é auto-gerado
                 .ForMember(dest => dest.Data_Emissao, opt => opt.Ignore()) // Data é auto-preenchida
                 .ForMember(dest => dest.Codigo_Validacao, opt => opt.Ignore()) // Código é gerado no serviço
+                .ForMember(dest => dest.Curso, opt => opt.Ignore()) // Propriedades de navegação ignoradas
+                .ForMember(dest => dest.Aluno, opt => opt.Ignore());
+
+            // Mapeamento CertificadoUpdateDTO → Certificado (usado na atualização)
+            CreateMap<CertificadoUpdateDTO, Certificado>()
+                .ForMember(dest => dest.ID, opt => opt.Ignore()) // ID não é alterado
+                .ForMember(dest => dest.Data_Emissao, opt => opt.Ignore()) // Data de emissão não muda
+                .ForMember(dest => dest.Codigo_Validacao, opt => opt.Ignore()) // Código não muda
+                .ForMember(dest => dest.Curso_ID, opt => opt.Ignore()) // IDs de relacionamento não mudam
+                .ForMember(dest => dest.Aluno_ID, opt => opt.Ignore())
                 .ForMember(dest => dest.Curso, opt => opt.Ignore()) // Propriedades de navegação ignoradas
                 .ForMember(dest => dest.Aluno, opt => opt.Ignore());
 

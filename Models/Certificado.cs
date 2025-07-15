@@ -45,6 +45,41 @@ namespace Api_HabeisEducacional.Models
         [StringLength(50)]
         public string Codigo_Validacao { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Área de conhecimento do certificado
+        /// Campo editável pelo administrador
+        /// </summary>
+        [StringLength(100)]
+        public string? Area { get; set; }
+
+        /// <summary>
+        /// Nível do curso certificado
+        /// Campo editável pelo administrador
+        /// </summary>
+        [StringLength(50)]
+        public string? Nivel { get; set; }
+
+        /// <summary>
+        /// Documento ou identificação adicional
+        /// Campo editável pelo administrador
+        /// </summary>
+        [StringLength(100)]
+        public string? Documento { get; set; }
+
+        /// <summary>
+        /// Nota final obtida no curso
+        /// Campo editável pelo administrador
+        /// </summary>
+        [Range(0, 10)]
+        public decimal? NotaFinal { get; set; }
+
+        /// <summary>
+        /// Carga horária total do curso
+        /// Campo editável pelo administrador
+        /// </summary>
+        [Range(1, 9999)]
+        public int? CargaHoraria { get; set; }
+
         // ═══════════════════════════════════════════════════════════════
         // PROPRIEDADES DE NAVEGAÇÃO
         // Configuradas no AppDbContext com relacionamentos otimizados

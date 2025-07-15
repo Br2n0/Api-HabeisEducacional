@@ -7,6 +7,7 @@ namespace Api_HabeisEducacional.DTOs
         public int ID { get; set; }
         public string Nome { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public string? FotoUrl { get; set; }
         public DateTime Data_Cadastro { get; set; }
     }
 
@@ -47,5 +48,8 @@ namespace Api_HabeisEducacional.DTOs
 
         [StringLength(255, MinimumLength = 6, ErrorMessage = "A senha deve ter entre 6 e 255 caracteres")]
         public string? Senha { get; set; }
+
+        [StringLength(500, ErrorMessage = "A URL da foto não pode ter mais que 500 caracteres")]
+        public string? FotoUrl { get; set; }
     }
 }

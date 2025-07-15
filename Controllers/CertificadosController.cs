@@ -301,6 +301,31 @@ namespace Api_HabeisEducacional.Controllers
             }
         }
 
+        /// <summary>
+        /// Atualiza os dados editáveis de um certificado (área, nível, documento, nota, carga horária)
+        /// </summary>
+        /// <param name="id">ID do certificado a ser atualizado</param>
+        /// <param name="dto">Dados para atualização</param>
+        /// <returns>Certificado atualizado</returns>
+        // PUT: api/Certificados/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCertificado(int id, CertificadoUpdateDTO dto)
+        {
+            try
+            {
+                var certificadoAtualizado = await _certificadoService.UpdateAsync(id, dto);
+                return Ok(certificadoAtualizado);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Erro ao atualizar certificado: {ex.Message}");
+            }
+        }
+
         // Comentado: Método de geração de código de validação movido para o serviço
         /*
         /// <summary>

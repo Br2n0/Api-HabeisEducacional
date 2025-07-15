@@ -31,6 +31,9 @@ namespace Api_HabeisEducacional.Services
         // Emite um novo certificado
         Task<CertificadoDTO> EmitirAsync(CertificadoCreateDTO dto);
         
+        // Atualiza dados editáveis de um certificado
+        Task<CertificadoDTO> UpdateAsync(int id, CertificadoUpdateDTO dto);
+        
         // Valida um certificado pelo código
         Task<bool> ValidarAsync(CertificadoValidacaoDTO dto);
     }
@@ -198,6 +201,28 @@ namespace Api_HabeisEducacional.Services
             certificadoDto.CursoTitulo = curso.Titulo;
             certificadoDto.AlunoNome = aluno.Nome;
             return certificadoDto;
+        }
+
+        /// <summary>
+        /// Atualiza dados editáveis de um certificado (area, nivel, documento, nota, carga horaria)
+        /// </summary>
+        public async Task<CertificadoDTO> UpdateAsync(int id, CertificadoUpdateDTO dto)
+        {
+            var certificado = await _db.Certificados
+                .Include(c => c.Curso)
+                .Include(c => c.Aluno)
+                .FirstOrDefaultAsync(c => c.ID == id);
+
+            if (certificado == null)
+                throw new ArgumentException("Certificado não encontrado.");
+
+            // Mapeia apenas os campos editáveis do DTO para a entidade
+            _mapper.Map(dto, certificado);
+
+            _db.Certificados.Update(certificado);
+            await _db.SaveChangesAsync();
+
+            return _mapper.Map<CertificadoDTO>(certificado);
         }
 
         /// <summary>
