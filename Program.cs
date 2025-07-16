@@ -64,6 +64,10 @@ builder.Services.AddControllers()
         
         // Configuração adicional para melhor legibilidade do JSON
         options.JsonSerializerOptions.WriteIndented = true;
+        
+        // 🔧 CORREÇÃO: Usar PascalCase para compatibilidade com frontend TypeScript
+        // Isso garante que campos como "ID", "Nome", "Email" sejam serializados corretamente
+        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Remove camelCase padrão
     });
 
 // Configuração do Swagger para documentação da API

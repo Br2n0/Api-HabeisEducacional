@@ -48,16 +48,14 @@ namespace Api_HabeisEducacional.Services
         // ✅ NOVO: AutoMapper para conversões automáticas entre entidades e DTOs
         private readonly IMapper _mapper;
 
-        // 🔄 MELHORADO: Construtor com injeção do AutoMapper
         /// <summary>
-        /// Construtor com injeção de dependências
+        /// Construtor que recebe o contexto via injeção de dependência
+        /// ✅ NOVO: Agora também recebe o IMapper
         /// </summary>
-        /// <param name="db">Contexto do banco de dados</param>
-        /// <param name="mapper">AutoMapper para conversões DTO ↔ Entity</param>
         public AlunoService(AppDbContext db, IMapper mapper)
         {
             _db = db;
-            _mapper = mapper; // Injeta o AutoMapper configurado no Program.cs
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -154,6 +152,9 @@ namespace Api_HabeisEducacional.Services
             // ✅ NOVO: AutoMapper converte DTO para entidade automaticamente
             var aluno = _mapper.Map<Aluno>(dto);
             aluno.Data_Cadastro = DateTime.Now; // Define data de cadastro
+            
+            // 🔒 CRÍTICO: Hash da senha antes de salvar no banco
+            aluno.Senha = HashSenha(dto.Senha);
 
             // Adiciona no banco e salva
             _db.Alunos.Add(aluno);
@@ -190,24 +191,10 @@ namespace Api_HabeisEducacional.Services
         }
 
         /// <summary>
-        /// Atualiza os dados de um aluno existente
+        /// Atualiza um aluno existente com todos os campos obrigatórios
         /// </summary>
         public async Task UpdateAsync(int id, AlunoCreateDTO dto)
         {
-            // Validações adicionais
-            if (string.IsNullOrWhiteSpace(dto.Nome))
-                throw new InvalidOperationException("O nome não pode estar vazio");
-            
-            if (string.IsNullOrWhiteSpace(dto.Email))
-                throw new InvalidOperationException("O email não pode estar vazio");
-            
-            if (dto.Nome.Length < 3)
-                throw new InvalidOperationException("O nome deve ter pelo menos 3 caracteres");
-
-            // Remove espaços extras do início e fim
-            dto.Nome = dto.Nome.Trim();
-            dto.Email = dto.Email.Trim();
-
             // Busca o aluno pelo ID
             var aluno = await _db.Alunos.FindAsync(id);
             if (aluno == null)
@@ -220,34 +207,19 @@ namespace Api_HabeisEducacional.Services
             // ✅ NOVO: AutoMapper atualiza propriedades automaticamente
             _mapper.Map(dto, aluno);
             
-            // Só atualiza a senha se uma nova senha foi fornecida
+            // 🔒 CRÍTICO: Hash da nova senha antes de salvar
             if (!string.IsNullOrEmpty(dto.Senha))
             {
-                if (dto.Senha.Length < 6)
-                    throw new InvalidOperationException("A senha deve ter pelo menos 6 caracteres");
-                    
-                aluno.Senha = dto.Senha;
+                ValidarSenhaSegura(dto.Senha);
+                aluno.Senha = HashSenha(dto.Senha);
             }
-            
-            /* CÓDIGO ANTERIOR (mantido para estudo):
-            // Atualiza os dados
-            aluno.Nome = dto.Nome;
-            aluno.Email = dto.Email;
-            
-            BENEFÍCIOS DA MUDANÇA:
-            ✅ Método Map(source, destination) atualiza objeto existente
-            ✅ Todas as propriedades são atualizadas automaticamente
-            ✅ Menos linhas de código para manter
-            ✅ Consistência com padrão de mapeamento da aplicação
-            */
 
             // Salva as alterações
             await _db.SaveChangesAsync();
         }
 
         /// <summary>
-        /// Atualiza parcialmente os dados de um aluno existente
-        /// Permite atualizar apenas os campos fornecidos (não-nulos)
+        /// Atualiza parcialmente um aluno existente
         /// </summary>
         public async Task UpdatePartialAsync(int id, AlunoUpdateDTO dto)
         {
@@ -256,33 +228,18 @@ namespace Api_HabeisEducacional.Services
             if (aluno == null)
                 throw new KeyNotFoundException("Aluno não encontrado");
 
-            // Atualiza apenas os campos fornecidos no DTO
-            if (!string.IsNullOrWhiteSpace(dto.Nome))
-            {
-                if (dto.Nome.Length < 3)
-                    throw new InvalidOperationException("O nome deve ter pelo menos 3 caracteres");
-                aluno.Nome = dto.Nome.Trim();
-            }
-            
-            if (!string.IsNullOrWhiteSpace(dto.Email))
-            {
-                // Verifica se o email já está em uso por outro aluno
-                if (await _db.Alunos.AnyAsync(a => a.Email == dto.Email && a.ID != id))
-                    throw new InvalidOperationException("Email já está em uso por outro aluno");
-                aluno.Email = dto.Email.Trim();
-            }
-            
-            if (!string.IsNullOrWhiteSpace(dto.Senha))
-            {
-                if (dto.Senha.Length < 6)
-                    throw new InvalidOperationException("A senha deve ter pelo menos 6 caracteres");
-                aluno.Senha = dto.Senha;
-            }
+            // Verifica se o email informado já está em uso por outro aluno
+            if (!string.IsNullOrEmpty(dto.Email) && await _db.Alunos.AnyAsync(a => a.Email == dto.Email && a.ID != id))
+                throw new InvalidOperationException("Email já está em uso por outro aluno");
 
-            // ✅ NOVO: Adicionar tratamento para FotoUrl
-            if (!string.IsNullOrWhiteSpace(dto.FotoUrl))
+            // ✅ NOVO: AutoMapper atualiza propriedades automaticamente
+            _mapper.Map(dto, aluno);
+            
+            // 🔒 CRÍTICO: Hash da nova senha se fornecida
+            if (!string.IsNullOrEmpty(dto.Senha))
             {
-                aluno.FotoUrl = dto.FotoUrl.Trim();
+                ValidarSenhaSegura(dto.Senha);
+                aluno.Senha = HashSenha(dto.Senha);
             }
 
             // Salva as alterações
@@ -319,8 +276,8 @@ namespace Api_HabeisEducacional.Services
             var aluno = await _db.Alunos
                 .FirstOrDefaultAsync(a => a.Email == dto.Email);
 
-            // Verifica se encontrou o aluno e se a senha está correta
-            if (aluno == null || aluno.Senha != dto.Senha)
+            // 🔒 CRÍTICO: Comparar senha hasheada com a senha hasheada armazenada
+            if (aluno == null || aluno.Senha != HashSenha(dto.Senha))
                 return null;
 
             // ✅ NOVO: AutoMapper converte automaticamente
@@ -363,6 +320,26 @@ namespace Api_HabeisEducacional.Services
             
             if (!senha.Any(char.IsDigit))
                 throw new InvalidOperationException("A senha deve conter pelo menos um número");
+        }
+
+        /// <summary>
+        /// Gera hash SHA256 da senha para armazenamento seguro
+        /// 🔒 SEGURANÇA: Usa SHA256 para criptografar senhas antes de salvar no banco
+        /// </summary>
+        /// <param name="senha">Senha em texto plano</param>
+        /// <returns>Hash SHA256 da senha</returns>
+        private string HashSenha(string senha)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(senha));
+                var builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2"));
+                }
+                return builder.ToString();
+            }
         }
     }
 } 
