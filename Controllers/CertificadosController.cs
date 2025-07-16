@@ -156,7 +156,7 @@ namespace Api_HabeisEducacional.Controllers
         }
 
         /// <summary>
-        /// Emite um novo certificado para um aluno em um curso
+        /// Emite um novo certificado para uma matrícula concluída
         /// </summary>
         /// <param name="certificadoDTO">Dados para emissão do certificado</param>
         /// <returns>Certificado emitido ou BadRequest se houver problemas</returns>

@@ -279,6 +279,12 @@ namespace Api_HabeisEducacional.Services
                 aluno.Senha = dto.Senha;
             }
 
+            // ✅ NOVO: Adicionar tratamento para FotoUrl
+            if (!string.IsNullOrWhiteSpace(dto.FotoUrl))
+            {
+                aluno.FotoUrl = dto.FotoUrl.Trim();
+            }
+
             // Salva as alterações
             await _db.SaveChangesAsync();
         }

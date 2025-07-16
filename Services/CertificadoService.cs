@@ -151,55 +151,53 @@ namespace Api_HabeisEducacional.Services
 
         /// <summary>
         /// Emite um novo certificado para uma conclusão de curso
+        /// Dados são preenchidos automaticamente baseados no curso da matrícula
         /// </summary>
         public async Task<CertificadoDTO> EmitirAsync(CertificadoCreateDTO dto)
         {
-            // Verifica se o aluno existe
-            var aluno = await _db.Alunos.FindAsync(dto.Aluno_ID);
-            if (aluno == null)
-                throw new KeyNotFoundException("Aluno não encontrado");
+            // Busca a matrícula com seus relacionamentos
+            var matricula = await _db.Matriculas
+                .Include(m => m.Aluno)
+                .Include(m => m.Curso)
+                .FirstOrDefaultAsync(m => m.ID == dto.Matricula_ID);
 
-            // Verifica se o curso existe
-            var curso = await _db.Cursos.FindAsync(dto.Curso_ID);
-            if (curso == null)
-                throw new KeyNotFoundException("Curso não encontrado");
+            if (matricula == null)
+                throw new KeyNotFoundException("Matrícula não encontrada");
 
-            // Verifica se o aluno concluiu o curso (através de uma matrícula concluída)
-            var matriculaConcluida = await _db.Matriculas
-                .AnyAsync(m => m.Aluno_ID == dto.Aluno_ID && 
-                               m.Curso_ID == dto.Curso_ID && 
-                               m.Status == StatusMatricula.Concluida);
-            
-            if (!matriculaConcluida)
-                throw new InvalidOperationException("Aluno não concluiu este curso");
+            // Verifica se a matrícula está concluída
+            if (matricula.Status != StatusMatricula.Concluida)
+                throw new InvalidOperationException("A matrícula não está concluída, não é possível emitir o certificado");
 
             // Verifica se já existe um certificado para este aluno neste curso
             var certificadoExistente = await _db.Certificados
-                .AnyAsync(c => c.Aluno_ID == dto.Aluno_ID && c.Curso_ID == dto.Curso_ID);
+                .FirstOrDefaultAsync(c => c.Aluno_ID == matricula.Aluno_ID && c.Curso_ID == matricula.Curso_ID);
             
-            if (certificadoExistente)
-                throw new InvalidOperationException("Certificado já emitido para este aluno neste curso");
+            if (certificadoExistente != null)
+                throw new InvalidOperationException("Já existe um certificado emitido para este aluno neste curso");
 
-            // Gera um código de validação único
-            string codigoValidacao = GerarCodigoValidacao(dto.Aluno_ID, dto.Curso_ID);
+            // Gera código de validação único
+            string codigoValidacao = GerarCodigoValidacao(matricula.Aluno_ID, matricula.Curso_ID);
 
-            // Cria um novo certificado
+            // Cria o novo certificado com dados automáticos do curso
             var certificado = new Certificado
             {
                 Data_Emissao = DateTime.Now,
-                Curso_ID = dto.Curso_ID,
-                Aluno_ID = dto.Aluno_ID,
-                Codigo_Validacao = codigoValidacao
+                Curso_ID = matricula.Curso_ID,
+                Aluno_ID = matricula.Aluno_ID,
+                Codigo_Validacao = codigoValidacao,
+                // Dados automáticos baseados no curso:
+                CargaHoraria = matricula.Curso?.Duracao,
+                Documento = $"Certificado de Conclusão - {matricula.Curso?.Titulo}"
             };
 
-            // Adiciona no banco e salva
+            // Adiciona no banco de dados e salva as mudanças
             _db.Certificados.Add(certificado);
             await _db.SaveChangesAsync();
 
             // ✅ NOVO: AutoMapper converte automaticamente
             var certificadoDto = _mapper.Map<CertificadoDTO>(certificado);
-            certificadoDto.CursoTitulo = curso.Titulo;
-            certificadoDto.AlunoNome = aluno.Nome;
+            certificadoDto.CursoTitulo = matricula.Curso?.Titulo ?? string.Empty;
+            certificadoDto.AlunoNome = matricula.Aluno?.Nome ?? string.Empty;
             return certificadoDto;
         }
 
